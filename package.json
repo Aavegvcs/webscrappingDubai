@@ -1,0 +1,33 @@
+{
+  "name": "car-scraper-gui",
+  "version": "1.0.0",
+  "description": "Yango Drive Data Scraper",
+  "main": "main.js",
+  "bin": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package": "pkg .",
+    "build": "electron-builder"
+  },
+  "dependencies": {
+    
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1",
+    "electron": "^25.9.8",
+    "electron-builder": "^26.0.12",
+    "playwright": "^1.52.0",
+    "xlsx": "^0.18.5"
+  },
+  "pkg": {
+    "assets": [
+      "index.html",
+      "preload.js",
+      "renderer.js"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "dist"
+  }
+}

@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yango Drive Data Scraper</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+  <div class="container mx-auto p-6 max-w-2xl">
+    <h1 class="text-2xl font-bold mb-6 text-center">Yango Drive Data Scraper</h1>
+    <div class="bg-white p-6 rounded-lg shadow-md">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700">Enter Car Names (comma-separated)</label>
+        <input
+          id="carNames"
+          type="text"
+          placeholder="e.g., MG, JAC J7, Toyota Camry"
+          class="mt-1 block w-full border-gray-300 rounded-md p-2"
+        />
+      </div>
+      <div class="flex space-x-2">
+        <button
+          id="scrapeBtn"
+          class="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400 flex items-center justify-center"
+        >
+          <span id="scrapeText">Scrape Data</span>
+          <svg
+            id="scrapeSpinner"
+            class="animate-spin h-5 w-5 ml-2 hidden"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+        </button>
+        <button
+          id="cancelBtn"
+          class="flex-1 bg-red-500 text-white p-2 rounded hover:bg-red-600 disabled:bg-gray-400 hidden"
+        >
+          Cancel Scraping
+        </button>
+      </div>
+      <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4 hidden" id="progressBar">
+        <div class="bg-blue-600 h-2.5 rounded-full" id="progressFill" style="width: 0%"></div>
+      </div>
+      <p id="message" class="mt-4 text-center text-red-500 hidden"></p>
+    </div>
+    <div id="filterSection" class="bg-white p-6 rounded-lg shadow-md mt-6 hidden">
+      <h2 class="text-lg font-semibold mb-4">Filter your Data</h2>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700">Car Name(s)</label>
+        <select
+          id="carNameFilter"
+          multiple
+          class="mt-1 block w-full border-gray-300 rounded-md p-2"
+        >
+          <option value="">All Cars</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700">Year of Manufacture</label>
+        <select id="yearFilter" class="mt-1 block w-full border-gray-300 rounded-md p-2">
+          <option value="">All Years</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700">Period</label>
+        <select id="periodFilter" class="mt-1 block w-full border-gray-300 rounded-md p-2">
+          <option value="">All Periods</option>
+        </select>
+      </div>
+      <button
+        id="downloadBtn"
+        class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 disabled:bg-gray-400"
+      >
+        Download Excel
+      </button>
+    </div>
+  </div>
+  <script src="renderer.js"></script>
+</body>
+</html>

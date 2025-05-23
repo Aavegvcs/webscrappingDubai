@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
+const fs = require("fs");
 const { chromium } = require("playwright");
 const xlsx = require("xlsx");
 const { execSync } = require("child_process");
@@ -7,7 +8,26 @@ const { execSync } = require("child_process");
 let scrapedData = [];
 let isScrapingCancelled = false;
 
-// Utility to validate car names
+function ensurePlaywrightInstalled() {
+  const browserPath = path.join(
+    __dirname,
+    "node_modules",
+    "playwright",
+    ".local-browsers"
+  );
+
+  if (!fs.existsSync(browserPath) || fs.readdirSync(browserPath).length === 0) {
+    try {
+      console.log("Installing Playwright browsers...");
+      execSync("npx playwright install --with-deps", { stdio: "inherit" });
+    } catch (error) {
+      console.error("Failed to install Playwright browsers:", error);
+    }
+  }
+}
+
+ensurePlaywrightInstalled();
+
 function validateCarName(carName) {
   const invalidChars = /[^a-zA-Z0-9\s-]/g;
   if (!carName || carName.length < 2) {
@@ -35,88 +55,142 @@ function formatCarNameForFile(carName) {
 
 async function scrollPage(page) {
   let lastHeight = await page.evaluate(() => document.body.scrollHeight);
-  while (true) {
-    await page.evaluate(() => window.scrollBy(0, 500));
-    await page.waitForTimeout(1500);
+  let attempts = 0;
+  const maxAttempts = 5;
+  while (attempts < maxAttempts) {
+    await page.evaluate(() => window.scrollBy(0, 1000)); // More aggressive scroll
+    await page.waitForTimeout(2000); // Increased wait time
     const newHeight = await page.evaluate(() => document.body.scrollHeight);
-    if (newHeight === lastHeight) break;
-    lastHeight = newHeight;
+    if (newHeight === lastHeight) {
+      attempts++;
+    } else {
+      attempts = 0;
+      lastHeight = newHeight;
+    }
     if (isScrapingCancelled) throw new Error("Scraping cancelled by user");
   }
 }
 
-async function scrapeCarData(page, carName, periodName, selectors) {
+async function scrapeCarData(
+  page,
+  carName,
+  periodName,
+  selectors,
+  durationHours,
+  isMonthly
+) {
   try {
     await page.waitForSelector(selectors.title, { timeout: 30000 });
     await page.waitForSelector(selectors.features, { timeout: 30000 });
     await page.waitForSelector(selectors.price, { timeout: 30000 });
 
-    return await page.evaluate(
-      ({ carName, periodName, selectors }) => {
-        const results = [];
-        const carElements = document.querySelectorAll(selectors.title);
-        const featureDivs = document.querySelectorAll(selectors.features);
-        const priceDivs = document.querySelectorAll(selectors.price);
+    let results = [];
+    let retryCount = 0;
+    const maxRetries = 3;
 
-        carElements.forEach((carElement, index) => {
-          const data = {};
-          const carNameText = carElement.textContent.trim();
-          data["Car Name"] = carNameText || "N/A";
+    while (retryCount < maxRetries) {
+      results = await page.evaluate(
+        ({ carName, periodName, selectors, durationHours, isMonthly }) => {
+          const results = [];
+          const carElements = document.querySelectorAll(selectors.title);
+          const featureDivs = document.querySelectorAll(selectors.features);
+          const priceDivs = document.querySelectorAll(selectors.price);
 
-          const ancestorContainer = carElement.closest("div");
-          if (!ancestorContainer) return;
+          console.log(
+            `Found ${carElements.length} cars for ${carName} (${periodName})`
+          );
 
-          const modelElement = ancestorContainer.querySelector(selectors.model);
-          const modelText = modelElement
-            ? modelElement.textContent.trim()
-            : "N/A";
-          data["Model"] = modelText;
-          const yearMatch = modelText.match(/\d{4}/);
-          data["Year"] = yearMatch ? yearMatch[0] : "N/A";
+          carElements.forEach((carElement, index) => {
+            const data = {};
+            const carNameText = carElement.textContent.trim();
+            data["Car Name"] = carNameText || "N/A";
 
-          const featureDiv = featureDivs[index];
-          if (featureDiv) {
-            const spanElements = featureDiv.querySelectorAll(
-              selectors.featureSpans
+            const ancestorContainer = carElement.closest("div");
+            if (!ancestorContainer) return;
+
+            const modelElement = ancestorContainer.querySelector(
+              selectors.model
             );
-            const featureTexts = Array.from(spanElements)
-              .map((span) => span.textContent.trim())
-              .filter((text) => text);
-            data["Description"] =
-              featureTexts.length > 0 ? featureTexts.join(", ") : "N/A";
-            data["Description"] =
-              data["Description"] === "N/A"
-                ? data["Description"]
-                : data["Description"].replace(/\s+/g, " ").trim();
-          } else {
-            data["Description"] = "N/A";
-          }
-
-          const priceDiv = priceDivs[index];
-          if (priceDiv) {
-            const pElements = priceDiv.querySelectorAll("p");
-            data["Cross Price"] = pElements[0]
-              ? pElements[0].textContent.trim()
+            const modelText = modelElement
+              ? modelElement.textContent.trim()
               : "N/A";
-            data["Actual Price"] = pElements[1]
-              ? pElements[1].textContent.trim()
-              : "N/A";
-          } else {
-            data["Cross Price"] = "N/A";
-            data["Actual Price"] = "N/A";
-          }
+            data["Model"] = modelText;
+            const yearMatch = modelText.match(/\d{4}/);
+            data["Year"] = yearMatch ? yearMatch[0] : "N/A";
 
-          data["Original Vehicle"] = carName;
-          data["Period"] = periodName;
+            const featureDiv = featureDivs[index];
+            if (featureDiv) {
+              const spanElements = featureDiv.querySelectorAll(
+                selectors.featureSpans
+              );
+              const featureTexts = Array.from(spanElements)
+                .map((span) => span.textContent.trim())
+                .filter((text) => text);
+              data["Description"] =
+                featureTexts.length > 0 ? featureTexts.join(", ") : "N/A";
+              data["Description"] =
+                data["Description"] === "N/A"
+                  ? data["Description"]
+                  : data["Description"].replace(/\s+/g, " ").trim();
+            } else {
+              data["Description"] = "N/A";
+            }
 
-          if (Object.keys(data).length > 0) {
-            results.push(data);
-          }
-        });
-        return results;
-      },
-      { carName, periodName, selectors }
-    );
+            const priceDiv = priceDivs[index];
+            if (priceDiv) {
+              const pElements = priceDiv.querySelectorAll("p");
+              const spanElements = priceDiv.querySelectorAll("span");
+              data["Cross Price"] = pElements[0]
+                ? pElements[0].textContent.trim()
+                : "N/A";
+              data["Actual Price"] = pElements[1]
+                ? pElements[1].textContent.trim()
+                : "N/A";
+              if (durationHours > 24 && !isMonthly && spanElements[2]) {
+                data["Total"] = spanElements[2].textContent.trim() || "N/A";
+              } else {
+                data["Total"] = "N/A";
+              }
+            } else {
+              data["Cross Price"] = "N/A";
+              data["Actual Price"] = "N/A";
+              data["Total"] = "N/A";
+            }
+
+            data["Original Vehicle"] = carName;
+            data["Period"] = periodName;
+
+            if (Object.keys(data).length > 0) {
+              results.push(data);
+            }
+          });
+          return results;
+        },
+        { carName, periodName, selectors, durationHours, isMonthly }
+      );
+
+      if (results.length > 0) break; // Exit if data is found
+      console.log(
+        `Retrying scrape for ${carName} (${periodName}), attempt ${
+          retryCount + 1
+        }`
+      );
+      await scrollPage(page); // Retry scrolling
+      retryCount++;
+    }
+
+    if (results.length === 0) {
+      console.log(
+        `No data scraped for ${carName} (${periodName}) after ${maxRetries} retries`
+      );
+      return {
+        success: false,
+        message: `No data found for ${carName} (${periodName})`,
+        data: [],
+      };
+    }
+
+    return { success: true, data: results };
   } catch (error) {
     let message = error.message;
     if (error.message.includes("Timeout")) {
@@ -132,7 +206,7 @@ async function scrapeCarData(page, carName, periodName, selectors) {
   }
 }
 
-async function scrapeCars(carNames) {
+async function scrapeCars(carNames, sinceDateTime, untilDateTime, months) {
   const errors = [];
   for (const carName of carNames) {
     const validation = validateCarName(carName);
@@ -144,12 +218,43 @@ async function scrapeCars(carNames) {
     return { success: false, message: errors.join("; ") };
   }
 
-  const sinceTime = Date.now();
-  const periods = [
-    { name: "Daily", duration: 9, durationDays: 1, isMonthly: false },
-    { name: "Weekly", duration: 9, durationDays: 7, isMonthly: false },
-    { name: "Monthly", duration: 1, durationDays: 30, isMonthly: true },
-  ];
+  let sinceTime,
+    untilTime,
+    durationHours,
+    isMonthly,
+    periodName,
+    durationMonths;
+  const now = new Date();
+
+  if (months && months > 0) {
+    isMonthly = true;
+    durationMonths = months;
+    sinceTime = now.getTime();
+    const untilDate = new Date(now);
+    untilDate.setMonth(now.getMonth() + months);
+    untilTime = untilDate.getTime();
+    durationHours = (untilTime - sinceTime) / (1000 * 60 * 60);
+    periodName = `${months} Month${months > 1 ? "s" : ""}`;
+  } else {
+    sinceTime = new Date(sinceDateTime).getTime();
+    untilTime = new Date(untilDateTime).getTime();
+    durationHours = (untilTime - sinceTime) / (1000 * 60 * 60);
+    isMonthly = durationHours >= 720;
+    durationMonths = isMonthly ? Math.ceil(durationHours / 720) : 0;
+    periodName = isMonthly
+      ? `${durationMonths} Month${durationMonths > 1 ? "s" : ""}`
+      : `${new Date(sinceTime).toLocaleString()} - ${new Date(
+          untilTime
+        ).toLocaleString()}`;
+  }
+
+  // Validate sinceTime is not in the past
+  if (sinceTime < now.getTime()) {
+    return {
+      success: false,
+      message: "Since date and time cannot be in the past",
+    };
+  }
 
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
@@ -207,52 +312,42 @@ async function scrapeCars(carNames) {
       }
       await captchaPage.close();
 
-      // Parallel scraping for periods
-      const scrapePromises = periods.map(async (period) => {
-        if (isScrapingCancelled) {
-          return { success: false, message: "Scraping cancelled", data: [] };
-        }
-        const page = await context.newPage();
-        try {
-          const until = sinceTime + period.durationDays * 24 * 60 * 60 * 1000;
-          const url = `https://drive.yango.com/search/all/${formattedCarName}?since=${sinceTime}&until=${until}&duration_months=${
-            period.duration
-          }&${
-            period.isMonthly ? "is_monthly=true&" : ""
-          }sort_by=price&sort_order=asc`;
-          await page.goto(url, {
-            waitUntil: "domcontentloaded",
-            timeout: 50000,
-          });
-          await scrollPage(page);
-          const result = await scrapeCarData(
-            page,
-            carName,
-            period.name,
-            selectors
-          );
-          return result.success !== false
-            ? { success: true, data: result }
-            : result;
-        } catch (error) {
-          return { success: false, message: error.message, data: [] };
-        } finally {
-          await page.close();
-        }
-      });
-
-      const results = await Promise.all(scrapePromises);
-      results.forEach((result) => {
+      const page = await context.newPage();
+      try {
+        const url = `https://drive.yango.com/search/all/${formattedCarName}?since=${sinceTime}&until=${untilTime}&duration_months=${
+          isMonthly ? durationMonths : 0
+        }${isMonthly ? "&is_monthly=true" : ""}&sort_by=price&sort_order=asc`;
+        console.log(`Navigating to URL: ${url}`);
+        await page.goto(url, {
+          waitUntil: "domcontentloaded",
+          timeout: 50000,
+        });
+        await scrollPage(page);
+        const result = await scrapeCarData(
+          page,
+          carName,
+          periodName,
+          selectors,
+          durationHours,
+          isMonthly
+        );
         if (result.success) {
+          console.log(
+            `Scraped ${result.data.length} items for ${carName} (${periodName})`
+          );
           scrapedData = scrapedData.concat(result.data);
         } else {
           errors.push(
-            `Failed to scrape ${carName} (${
-              periods[results.indexOf(result)].name
-            }): ${result.message}`
+            `Failed to scrape ${carName} (${periodName}): ${result.message}`
           );
         }
-      });
+      } catch (error) {
+        errors.push(
+          `Failed to scrape ${carName} (${periodName}): ${error.message}`
+        );
+      } finally {
+        await page.close();
+      }
     }
 
     if (captchaDetected) {
@@ -313,11 +408,19 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
-ipcMain.handle("scrape", async (event, carNames) => {
-  isScrapingCancelled = false;
-  const result = await scrapeCars(carNames);
-  return result;
-});
+ipcMain.handle(
+  "scrape",
+  async (event, { carNames, sinceDateTime, untilDateTime, months }) => {
+    isScrapingCancelled = false;
+    const result = await scrapeCars(
+      carNames,
+      sinceDateTime,
+      untilDateTime,
+      months
+    );
+    return result;
+  }
+);
 
 ipcMain.handle("cancel-scrape", () => {
   isScrapingCancelled = true;
@@ -340,7 +443,7 @@ ipcMain.handle("get-car-names", () => {
   return carNames;
 });
 
-ipcMain.handle("download-excel", async (event, { carNames, year, period }) => {
+ipcMain.handle("download-excel", async (event, { carNames, year }) => {
   let filteredData = scrapedData;
   if (carNames && carNames.length > 0 && carNames[0] !== "") {
     filteredData = filteredData.filter((item) =>
@@ -348,8 +451,6 @@ ipcMain.handle("download-excel", async (event, { carNames, year, period }) => {
     );
   }
   if (year) filteredData = filteredData.filter((item) => item.Year === year);
-  if (period)
-    filteredData = filteredData.filter((item) => item.Period === period);
 
   if (filteredData.length === 0) {
     return { success: false, message: "No data matches the selected filters" };
@@ -366,7 +467,6 @@ ipcMain.handle("download-excel", async (event, { carNames, year, period }) => {
     fileNameParts.push("all_cars");
   }
   if (year) fileNameParts.push(year);
-  if (period) fileNameParts.push(period.toLowerCase());
   const timestamp = Date.now();
   const fileName = `car_data_${fileNameParts.join("_")}_${timestamp}.xlsx`;
   const filePath = path.join(app.getPath("downloads"), fileName);

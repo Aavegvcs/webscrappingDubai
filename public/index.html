@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yango Drive Data Scraper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto p-6 max-w-2xl">
+        <h1 class="text-3xl font-bold mb-6 text-center">Yango Drive Data Scraper</h1>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="mb-4">
+                <label class="block text-lg font-medium text-gray-700">Enter Car Names (comma-separated for multiple
+                    cars)</label>
+                <input id="carNames" type="text" placeholder="e.g., MG, JAC J7, Toyota Camry"
+                    class="mt-1 block w-full border-gray-300 rounded-md p-2" />
+            </div>
+            <div class="mb-4">
+                <label class="block text-lg font-medium text-gray-700">Months (enter number of months)</label>
+                <input id="monthsInput" type="number" min="1" placeholder="e.g., 1, 2, 3"
+                    class="mt-1 block w-full border-gray-300 rounded-md p-2" />
+            </div>
+            <div class="mb-4">
+                <label class="block text-lg font-medium text-gray-700">Pickup Date and Time</label>
+                <div class="flex space-x-2">
+                    <input id="sinceDate" type="date" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2" min="" />
+                    <input id="sinceTime" type="time" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-lg font-medium text-gray-700">Drop-off Date and Time</label>
+                <div class="flex space-x-2">
+                    <input id="untilDate" type="date" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2" min="" />
+                    <input id="untilTime" type="time" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button id="scrapeBtn"
+                    class="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400 flex items-center justify-center">
+                    <span id="scrapeText">Scrape Data</span>
+                    <svg id="scrapeSpinner" class="animate-spin h-5 w-5 ml-2 hidden" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </button>
+                <button id="cancelBtn"
+                    class="flex-1 bg-red-500 text-white p-2 rounded hover:bg-red-600 disabled:bg-gray-400 hidden">
+                    Cancel Scraping
+                </button>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4 hidden" id="progressBar">
+                <div class="bg-blue-600 h-2.5 rounded-full" id="progressFill" style="width: 0%"></div>
+            </div>
+            <p id="message" class="mt-4 text-center text-red-500 hidden"></p>
+        </div>
+        <div id="filterSection" class="bg-white p-6 rounded-lg shadow-md mt-6 hidden">
+            <h2 class="text-lg font-semibold mb-4">Filter your Data</h2>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Car Name(s)</label>
+                <select id="carNameFilter" multiple class="mt-1 block w-full border-gray-300 rounded-md p-2">
+                    <option value="">All Cars</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Year of Manufacture</label>
+                <select id="yearFilter" class="mt-1 block w-full border-gray-300 rounded-md p-2">
+                    <option value="">All Years</option>
+                </select>
+            </div>
+            <button id="downloadBtn"
+                class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 disabled:bg-gray-400">
+                Download Excel
+            </button>
+        </div>
+    </div>
+    <script src="renderer.js"></script>
+    <script>
+        // Set min attribute for date inputs to today
+        const now = new Date();
+        const today = now.toISOString().split("T")[0];
+        document.getElementById("sinceDate").setAttribute("min", today);
+        document.getElementById("untilDate").setAttribute("min", today);
+
+        // Dynamically enable/disable date-time inputs based on months input
+        const monthsInput = document.getElementById("monthsInput");
+        const sinceDate = document.getElementById("sinceDate");
+        const sinceTime = document.getElementById("sinceTime");
+        const untilDate = document.getElementById("untilDate");
+        const untilTime = document.getElementById("untilTime");
+
+        monthsInput.addEventListener("input", () => {
+            const hasMonths = monthsInput.value && monthsInput.value > 0;
+            sinceDate.disabled = hasMonths;
+            sinceTime.disabled = hasMonths;
+            untilDate.disabled = hasMonths;
+            untilTime.disabled = hasMonths;
+            if (hasMonths) {
+                sinceDate.value = "";
+                sinceTime.value = "";
+                untilDate.value = "";
+                untilTime.value = "";
+            }
+        });
+    </script>
+</body>
+
+</html>

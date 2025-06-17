@@ -6,7 +6,14 @@ const fs = require("fs");
 const cors = require("cors");
 
 const app = express();
-app.use(cors()); // Allow cross-origin requests
+// app.use(cors()); // Allow cross-origin requests
+app.use(
+  cors({
+    origin: '*',  // Allow all origins
+    credentials: true, // Allow credentials (cookies, Authorization headers, etc.)
+  })
+);
+
 app.use(express.json()); // Parse JSON bodies
 app.use(express.static(path.join(__dirname, "public"))); // Serve frontend static files
 
@@ -66,9 +73,9 @@ async function scrapeCarData(
   isMonthly
 ) {
   try {
-    await page.waitForSelector(selectors.title, { timeout: 30000 });
-    await page.waitForSelector(selectors.features, { timeout: 30000 });
-    await page.waitForSelector(selectors.price, { timeout: 30000 });
+    await page.waitForSelector(selectors.title, { timeout: 3000 });
+    await page.waitForSelector(selectors.features, { timeout: 3000 });
+    await page.waitForSelector(selectors.price, { timeout: 3000 });
 
     let results = [];
     let retryCount = 0;

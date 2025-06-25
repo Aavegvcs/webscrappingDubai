@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -111,4 +111,500 @@
     </script>
 </body>
 
+</html> -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yango Drive Data Scraper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto p-6 max-w-3xl">
+        <h1 class="text-3xl font-bold mb-6 text-center">Yango Drive Data Scraper</h1>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="mb-4">
+                <label class="block text-lg font-medium text-gray-700">Enter Car Names (comma-separated for multiple
+                    cars)</label>
+                <input id="carNames" type="text" placeholder="e.g., MG, JAC J7, Toyota Camry"
+                    class="mt-1 block w-full border-gray-300 rounded-md p-2" />
+            </div>
+            <div class="mb-4">
+                <label class="block text-lg font-medium text-gray-700">Rental Types</label>
+                <div class="flex space-x-4 mt-2">
+                    <label><input type="checkbox" id="dailyCheck" checked> Daily</label>
+                    <label><input type="checkbox" id="weeklyCheck"> Weekly</label>
+                    <label><input type="checkbox" id="monthlyCheck"> Monthly</label>
+                </div>
+            </div>
+            <div id="dailySection" class="mb-4">
+                <h3 class="text-lg font-semibold mb-2">Daily Rental</h3>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Pickup Date and Time</label>
+                    <div class="flex space-x-2">
+                        <input id="sinceDate" type="date" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2"
+                            min="" />
+                        <input id="sinceTime" type="time" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Drop-off Date and Time</label>
+                    <div class="flex space-x-2">
+                        <input id="untilDate" type="date" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2"
+                            min="" />
+                        <input id="untilTime" type="time" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                    </div>
+                </div>
+            </div>
+            <div id="weeklySection" class="mb-4 hidden">
+                <h3 class="text-lg font-semibold mb-2">Weekly Rental</h3>
+                <div id="weeklyRanges">
+                    <div class="weekly-range mb-4" data-index="1">
+                        <div class="mb-2">
+                            <label class="block text-sm font-medium text-gray-700">Pickup Date and Time (Range
+                                1)</label>
+                            <div class="flex space-x-2">
+                                <input type="date"
+                                    class="weekly-since-date mt-1 block w-1/2 border-gray-300 rounded-md p-2" min="" />
+                                <input type="time"
+                                    class="weekly-since-time mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="block text-sm font-medium text-gray-700">Drop-off Date and Time (Range
+                                1)</label>
+                            <div class="flex space-x-2">
+                                <input type="date"
+                                    class="weekly-until-date mt-1 block w-1/2 border-gray-300 rounded-md p-2" min="" />
+                                <input type="time"
+                                    class="weekly-until-time mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button id="addWeeklyRange" class="bg-gray-200 text-gray-700 p-2 rounded hover:bg-gray-300">Add Another
+                    Weekly Range</button>
+            </div>
+            <div id="monthlySection" class="mb-4 hidden">
+                <h3 class="text-lg font-semibold mb-2">Monthly Rental</h3>
+                <label class="block text-sm font-medium text-gray-700">Months (enter number of months)</label>
+                <input id="monthsInput" type="number" min="1" placeholder="e.g., 1, 2, 3"
+                    class="mt-1 block w-full border-gray-300 rounded-md p-2" />
+            </div>
+            <div class="flex space-x-2">
+                <button id="scrapeBtn"
+                    class="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400 flex items-center justify-center">
+                    <span id="scrapeText">Scrape Data</span>
+                    <svg id="scrapeSpinner" class="animate-spin h-5 w-5 ml-2 hidden" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </button>
+                <button id="cancelBtn"
+                    class="flex-1 bg-red-500 text-white p-2 rounded hover:bg-red-600 disabled:bg-gray-400 hidden">
+                    Cancel Scraping
+                </button>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4 hidden" id="progressBar">
+                <div class="bg-blue-600 h-2.5 rounded-full" id="progressFill" style="width: 0%"></div>
+            </div>
+            <p id="message" class="mt-4 text-center text-red-500 hidden"></p>
+        </div>
+        <div id="filterSection" class="bg-white p-6 rounded-lg shadow-md mt-6 hidden">
+            <h2 class="text-lg font-semibold mb-4">Filter your Data</h2>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Car Name(s)</label>
+                <select id="carNameFilter" multiple class="mt-1 block w-full border-gray-300 rounded-md p-2">
+                    <option value="">All Cars</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Year of Manufacture</label>
+                <select id="yearFilter" class="mt-1 block w-full border-gray-300 rounded-md p-2">
+                    <option value="">All Years</option>
+                </select>
+            </div>
+            <button id="downloadBtn"
+                class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 disabled:bg-gray-400">
+                Download Excel
+            </button>
+        </div>
+    </div>
+    <script src="renderer.js"></script>
+    <script>
+        // Set min attribute for date inputs to today
+        const now = new Date();
+        const today = now.toISOString().split("T")[0];
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            input.setAttribute("min", today);
+        });
+
+        // Toggle sections based on checkboxes
+        const dailyCheck = document.getElementById("dailyCheck");
+        const weeklyCheck = document.getElementById("weeklyCheck");
+        const monthlyCheck = document.getElementById("monthlyCheck");
+        const dailySection = document.getElementById("dailySection");
+        const weeklySection = document.getElementById("weeklySection");
+        const monthlySection = document.getElementById("monthlySection");
+
+        dailyCheck.addEventListener("change", () => {
+            dailySection.classList.toggle("hidden", !dailyCheck.checked);
+        });
+        weeklyCheck.addEventListener("change", () => {
+            weeklySection.classList.toggle("hidden", !weeklyCheck.checked);
+        });
+        monthlyCheck.addEventListener("change", () => {
+            monthlySection.classList.toggle("hidden", !monthlyCheck.checked);
+        });
+
+        // Add weekly date range
+        let rangeCount = 1;
+        document.getElementById("addWeeklyRange").addEventListener("click", () => {
+            if (rangeCount >= 2) return;
+            rangeCount++;
+            const weeklyRanges = document.getElementById("weeklyRanges");
+            const newRange = document.createElement("div");
+            newRange.className = "weekly-range mb-4";
+            newRange.dataset.index = rangeCount;
+            newRange.innerHTML = `
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Pickup Date and Time (Range ${rangeCount})</label>
+                    <div class="flex space-x-2">
+                        <input type="date" class="weekly-since-date mt-1 block w-1/2 border-gray-300 rounded-md p-2" min="${today}" />
+                        <input type="time" class="weekly-since-time mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Drop-off Date and Time (Range ${rangeCount})</label>
+                    <div class="flex space-x-2">
+                        <input type="date" class="weekly-until-date mt-1 block w-1/2 border-gray-300 rounded-md p-2" min="${today}" />
+                        <input type="time" class="weekly-until-time mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                    </div>
+                </div>
+            `;
+            weeklyRanges.appendChild(newRange);
+            if (rangeCount === 2) document.getElementById("addWeeklyRange").classList.add("hidden");
+        });
+    </script>
+</body>
+
+</html> -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yango Drive Data Scraper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto p-6 max-w-3xl">
+        <h1 class="text-3xl font-bold mb-6 text-center">Yango Drive Data Scraper</h1>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="mb-4">
+                <label class="block text-lg font-medium text-gray-700">Enter Car Names (comma-separated for multiple
+                    cars)</label>
+                <input id="carNames" type="text" placeholder="e.g., MG, JAC J7, Toyota Camry"
+                    class="mt-1 block w-full border-gray-300 rounded-md p-2" />
+            </div>
+            <div class="mb-4">
+                <label class="block text-lg font-medium text-gray-700">Rental Types</label>
+                <div class="flex space-x-4 mt-2">
+                    <label><input type="checkbox" id="dailyCheck" checked> Daily</label>
+                    <label><input type="checkbox" id="weeklyCheck"> Weekly</label>
+                    <label><input type="checkbox" id="monthlyCheck"> Monthly</label>
+                </div>
+            </div>
+            <div id="dailySection" class="mb-4">
+                <h3 class="text-lg font-semibold mb-2">Daily Rental</h3>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Pickup Date and Time</label>
+                    <div class="flex space-x-2">
+                        <input id="sinceDate" type="date" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2"
+                            min="" />
+                        <input id="sinceTime" type="time" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Drop-off Date and Time</label>
+                    <div class="flex space-x-2">
+                        <input id="untilDate" type="date" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2"
+                            min="" />
+                        <input id="untilTime" type="time" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                    </div>
+                </div>
+            </div>
+            <div id="weeklySection" class="mb-4 hidden">
+                <h3 class="text-lg font-semibold mb-2">Weekly Rental</h3>
+                <div id="weeklyRanges">
+                    <div class="weekly-range mb-4" data-index="1">
+                        <div class="mb-2">
+                            <label class="block text-sm font-medium text-gray-700">Pickup Date and Time</label>
+                            <div class="flex space-x-2">
+                                <input type="date"
+                                    class="weekly-since-date mt-1 block w-1/2 border-gray-300 rounded-md p-2" min="" />
+                                <input type="time"
+                                    class="weekly-since-time mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="block text-sm font-medium text-gray-700">Drop-off Date and Time</label>
+                            <div class="flex space-x-2">
+                                <input type="date"
+                                    class="weekly-until-date mt-1 block w-1/2 border-gray-300 rounded-md p-2" min="" />
+                                <input type="time"
+                                    class="weekly-until-time mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="monthlySection" class="mb-4 hidden">
+                <h3 class="text-lg font-semibold mb-2">Monthly Rental</h3>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">From Date and Time</label>
+                    <div class="flex space-x-2">
+                        <input id="fromDate" type="date" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2"
+                            min="" />
+                        <input id="fromTime" type="time" class="mt-1 block w-1/2 border-gray-300 rounded-md p-2" />
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Months</label>
+                    <input id="monthsInput" type="number" min="1" placeholder="e.g., 1, 2, 3"
+                        class="mt-1 block w-full border-gray-300 rounded-md p-2" />
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button id="scrapeBtn"
+                    class="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400 flex items-center justify-center">
+                    <span id="scrapeText">Scrape Data</span>
+                    <svg id="scrapeSpinner" class="animate-spin h-5 w-5 ml-2 hidden" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </button>
+                <button id="cancelBtn"
+                    class="flex-1 bg-red-500 text-white p-2 rounded hover:bg-red-600 disabled:bg-gray-400 hidden">
+                    Cancel Scraping
+                </button>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4 hidden" id="progressBar">
+                <div class="bg-blue-600 h-2.5 rounded-full" id="progressFill" style="width: 0%"></div>
+            </div>
+            <p id="message" class="mt-4 text-center text-red-500 hidden"></p>
+        </div>
+        <div id="filterSection" class="bg-white p-6 rounded-lg shadow-md mt-6 hidden">
+            <h2 class="text-lg font-semibold mb-4">Filter your Data</h2>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Car Name(s)</label>
+                <select id="carNameFilter" multiple class="mt-1 block w-full border-gray-300 rounded-md p-2">
+                    <option value="">All Cars</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Year of Manufacture</label>
+                <select id="yearFilter" class="mt-1 block w-full border-gray-300 rounded-md p-2">
+                    <option value="">All Years</option>
+                </select>
+            </div>
+            <button id="downloadBtn"
+                class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 disabled:bg-gray-400">
+                Download Excel
+            </button>
+        </div>
+    </div>
+    <script src="renderer.js"></script>
+    <script>
+        // Set min attribute for date inputs to today
+        const now = new Date();
+        const today = now.toISOString().split("T")[0];
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            input.setAttribute("min", today);
+        });
+
+        // Toggle sections based on checkboxes
+        const dailyCheck = document.getElementById("dailyCheck");
+        const weeklyCheck = document.getElementById("weeklyCheck");
+        const monthlyCheck = document.getElementById("monthlyCheck");
+        const dailySection = document.getElementById("dailySection");
+        const weeklySection = document.getElementById("weeklySection");
+        const monthlySection = document.getElementById("monthlySection");
+
+        dailyCheck.addEventListener("change", () => {
+            dailySection.classList.toggle("hidden", !dailyCheck.checked);
+        });
+        weeklyCheck.addEventListener("change", () => {
+            weeklySection.classList.toggle("hidden", !weeklyCheck.checked);
+        });
+        monthlyCheck.addEventListener("change", () => {
+            monthlySection.classList.toggle("hidden", !monthlyCheck.checked);
+        });
+    </script>
+
+</body>
+
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yango Drive Data Scraper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto p-6 max-w-3xl">
+        <h1 class="text-3xl font-bold mb-6 text-center">Yango Drive Data Scraper</h1>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="mb-4">
+                <label class="block text-lg font-medium text-gray-700">Enter Car Names (comma-separated for multiple
+                    cars)</label>
+                <input id="carNames" type="text" placeholder="e.g., MG, JAC J7, Toyota Camry"
+                    class="mt-1 block w-full border-gray-300 rounded-md p-2" />
+            </div>
+            <div class="mb-4">
+                <label class="block text-lg font-medium text-gray-700">Rental Types</label>
+                <div class="flex space-x-4 mt-2">
+                    <label><input type="checkbox" id="dailyCheck" checked> Daily</label>
+                    <label><input type="checkbox" id="weeklyCheck"> Weekly</label>
+                    <label><input type="checkbox" id="monthlyCheck"> Monthly</label>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-lg font-medium text-gray-700">Pickup Date</label>
+                <input id="pickupDate" type="date" class="mt-1 block w-full border-gray-300 rounded-md p-2" min="" />
+            </div>
+            <div class="mb-4">
+                <label class="block text-lg font-medium text-gray-700">Drop-off Date</label>
+                <input id="dropOffDate" type="date" class="mt-1 block w-full border-gray-300 rounded-md p-2" min="" />
+            </div>
+            <div class="mb-4" id="monthlySection" class="hidden">
+                <h3 class="text-lg font-semibold mb-2">Monthly Rental</h3>
+                <div class="mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Months</label>
+                    <input id="monthsInput" type="number" min="1" placeholder="e.g., 1, 2, 3"
+                        class="mt-1 block w-full border-gray-300 rounded-md p-2" />
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button id="scrapeBtn"
+                    class="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400 flex items-center justify-center">
+                    <span id="scrapeText">Scrape Data</span>
+                    <svg id="scrapeSpinner" class="animate-spin h-5 w-5 ml-2 hidden" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </button>
+                <button id="cancelBtn"
+                    class="flex-1 bg-red-500 text-white p-2 rounded hover:bg-red-600 disabled:bg-gray-400 hidden">
+                    Cancel Scraping
+                </button>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-4 hidden" id="progressBar">
+                <div class="bg-blue-600 h-2.5 rounded-full" id="progressFill" style="width: 0%"></div>
+            </div>
+            <p id="message" class="mt-4 text-center text-red-500 hidden"></p>
+        </div>
+        <div id="filterSection" class="bg-white p-6 rounded-lg shadow-md mt-6 hidden">
+            <h2 class="text-lg font-semibold mb-4">Filter your Data</h2>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Car Name(s)</label>
+                <select id="carNameFilter" multiple class="mt-1 block w-full border-gray-300 rounded-md p-2">
+                    <option value="">All Cars</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Year of Manufacture</label>
+                <select id="yearFilter" class="mt-1 block w-full border-gray-300 rounded-md p-2">
+                    <option value="">All Years</option>
+                </select>
+            </div>
+            <button id="downloadBtn"
+                class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 disabled:bg-gray-400">
+                Download Excel
+            </button>
+        </div>
+    </div>
+    <script src="renderer.js"></script>
+    <!-- <script>
+        // Set min attribute for date inputs to today
+        const now = new Date();
+        const today = now.toISOString().split("T")[0];
+        document.querySelectorAll('input[type="date"]').forEach(input => {
+            input.setAttribute("min", today);
+        });
+
+        // Toggle sections based on checkboxes
+        const dailyCheck = document.getElementById("dailyCheck");
+        const weeklyCheck = document.getElementById("weeklyCheck");
+        const monthlyCheck = document.getElementById("monthlyCheck");
+        const monthlySection = document.getElementById("monthlySection");
+
+        dailyCheck.addEventListener("change", () => {});
+        weeklyCheck.addEventListener("change", () => {});
+        monthlyCheck.addEventListener("change", () => {
+            monthlySection.classList.toggle("hidden", !monthlyCheck.checked);
+        });
+    </script> -->
+    <script>
+        const now = new Date();
+        const today = now.toISOString().split("T")[0];
+
+        // Set pickup date to today
+        const pickupDateInput = document.getElementById("pickupDate");
+        pickupDateInput.setAttribute("min", today);
+        pickupDateInput.value = today;
+
+        // Set drop-off date to today + 1
+        const dropOffDateInput = document.getElementById("dropOffDate");
+        const tomorrow = new Date(now);
+        tomorrow.setDate(now.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split("T")[0];
+        dropOffDateInput.setAttribute("min", today);
+        dropOffDateInput.value = tomorrowStr;
+
+        // Set default months value to 1
+        const monthsInput = document.getElementById("monthsInput");
+        monthsInput.value = "1";
+
+        // Toggle monthly section visibility
+        const dailyCheck = document.getElementById("dailyCheck");
+        const weeklyCheck = document.getElementById("weeklyCheck");
+        const monthlyCheck = document.getElementById("monthlyCheck");
+        const monthlySection = document.getElementById("monthlySection");
+
+        dailyCheck.addEventListener("change", () => { });
+        weeklyCheck.addEventListener("change", () => { });
+        monthlyCheck.addEventListener("change", () => {
+            monthlySection.classList.toggle("hidden", !monthlyCheck.checked);
+        });
+
+        // Initial visibility
+        monthlySection.classList.toggle("hidden", !monthlyCheck.checked);
+    </script>
+
+
+</body>
+
 </html>
+<!-- <!DOCTYPE html>

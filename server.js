@@ -1381,7 +1381,7 @@ async function scrapeCars(
   now.setHours(now.getHours()+7); 
   const baseTime = now.toTimeString().split(" ")[0]; // "15:03:00"
 
-  const browser = await chromium.launch({ headless: false});
+  const browser = await chromium.launch({ headless: true});
   const context = await browser.newContext();
   await context.setExtraHTTPHeaders({
     "User-Agent":

@@ -768,7 +768,6 @@ document.getElementById("scrapeBtn").addEventListener("click", async () => {
   const carNameFilter = document.getElementById("carNameFilter");
   const downloadBtn = document.getElementById("downloadBtn");
 
-  // Input validation
   if (!carNamesInput) {
     messageEl.textContent = "Please enter at least one car name";
     messageEl.classList.remove("hidden");

@@ -667,20 +667,50 @@ async function scrapeCarData(
                 data["Description"] = "N/A";
               }
 
+              // const priceDiv = priceDivs[index];
+              // if (priceDiv) {
+              //   const pElements = priceDiv.querySelectorAll("p");
+              //   const spanElements = priceDiv.querySelectorAll("span");
+              //   data["Cross Price"] = pElements[0]
+              //     ? pElements[0].textContent.trim()
+              //     : "N/A";
+              //   data["Actual Price"] = pElements[1]
+              //     ? pElements[1].textContent.trim()
+              //     : "N/A";
+              //   data["Total"] =
+              //     durationHours > 24 && !isMonthly && spanElements[2]
+              //       ? spanElements[2].textContent.trim()
+              //       : "N/A";
+              // } else {
+              //   data["Cross Price"] = "N/A";
+              //   data["Actual Price"] = "N/A";
+              //   data["Total"] = "N/A";
+              // }
               const priceDiv = priceDivs[index];
               if (priceDiv) {
                 const pElements = priceDiv.querySelectorAll("p");
-                const spanElements = priceDiv.querySelectorAll("span");
-                data["Cross Price"] = pElements[0]
-                  ? pElements[0].textContent.trim()
-                  : "N/A";
-                data["Actual Price"] = pElements[1]
-                  ? pElements[1].textContent.trim()
-                  : "N/A";
-                data["Total"] =
-                  durationHours > 24 && !isMonthly && spanElements[2]
-                    ? spanElements[2].textContent.trim()
-                    : "N/A";
+                let crossPrice = "N/A";
+                let actualPrice = "N/A";
+                let totalPrice = "N/A";
+
+                pElements.forEach((p) => {
+                  const text = p.textContent.trim();
+
+                  if (/Total:/i.test(text)) {
+                    totalPrice = text.replace("Total:", "").trim();
+                  } else if (
+                    /AED/.test(text) &&
+                    p.querySelector(".Price_crossOut__QufS3")
+                  ) {
+                    crossPrice = text;
+                  } else if (/AED/.test(text)) {
+                    actualPrice = text;
+                  }
+                });
+
+                data["Cross Price"] = crossPrice;
+                data["Actual Price"] = actualPrice;
+                data["Total"] = totalPrice;
               } else {
                 data["Cross Price"] = "N/A";
                 data["Actual Price"] = "N/A";
@@ -964,7 +994,7 @@ async function scrapeCars(
   }
   if (errors.length > 0) return { success: false, message: errors.join("; ") };
 
-  const browser = await chromium.launch({ headless: true});
+  const browser = await chromium.launch({ headless: false});
   const context = await browser.newContext();
   await context.setExtraHTTPHeaders({
     "User-Agent":
@@ -985,8 +1015,9 @@ async function scrapeCars(
 
   // Calculate base time (current time + 2 hours)
   const now = new Date(); // Current time: 03:41 PM IST
-  now.setHours(now.getHours() + 7); // Add 2 hours to get 05:41 PM IST
+  now.setHours(now.getHours() + 2); // Add 2 hours to get 05:41 PM IST
   const baseTime = now.toTimeString().split(" ")[0]; // "17:41:00"
+  console.log("base time is ", baseTime);
 
   try {
     for (const carName of carNames) {

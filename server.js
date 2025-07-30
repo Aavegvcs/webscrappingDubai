@@ -552,7 +552,7 @@ async function scrapeCarData(
       );
       await page.goto(mainUrl, {
         waitUntil: "domcontentloaded",
-        timeout: 30000,
+        timeout: 15000,
       });
       // await page.evaluate(() => {
       //   return new Promise((resolve) => {
@@ -994,7 +994,7 @@ async function scrapeCars(
   }
   if (errors.length > 0) return { success: false, message: errors.join("; ") };
 
-  const browser = await chromium.launch({ headless: true});
+  const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
   await context.setExtraHTTPHeaders({
     "User-Agent":
@@ -1014,10 +1014,10 @@ async function scrapeCars(
   };
 
   // Calculate base time (current time + 2 hours)
-  const now = new Date(); // Current time: 03:41 PM IST
-  now.setHours(now.getHours() + 7); // Add 2 hours to get 05:41 PM IST
-  const baseTime = now.toTimeString().split(" ")[0]; // "17:41:00"
-  console.log("base time is ", baseTime);
+  const now = new Date();
+  const addedTime = new Date(now.getTime() + 5.5 * 60 * 60 * 1000); // Add 5.5 hours
+  const baseTime = addedTime.toTimeString().split(" ")[0]; // "HH:MM:SS"
+  console.log("base time is", baseTime);
 
   try {
     for (const carName of carNames) {
@@ -1048,7 +1048,7 @@ async function scrapeCars(
 
       const page = await context.newPage();
       try {
-        if (cookieStore.length > 0) await context.addCookies(cookieStore);
+        // if (cookieStore.length > 0) await context.addCookies(cookieStore);
 
         // Daily rental
         if (dailyCheck) {

@@ -1015,7 +1015,7 @@ async function scrapeCars(
 
   // Calculate base time (current time + 2 hours)
   const now = new Date(); // Current time: 03:41 PM IST
-  now.setHours(now.getHours() + 2); // Add 2 hours to get 05:41 PM IST
+  now.setHours(now.getHours() + 7); // Add 2 hours to get 05:41 PM IST
   const baseTime = now.toTimeString().split(" ")[0]; // "17:41:00"
   console.log("base time is ", baseTime);
 

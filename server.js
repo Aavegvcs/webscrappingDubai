@@ -552,7 +552,7 @@ async function scrapeCarData(
       );
       await page.goto(mainUrl, {
         waitUntil: "domcontentloaded",
-        timeout: 5000,
+        timeout: 30000,
       });
       // await page.evaluate(() => {
       //   return new Promise((resolve) => {

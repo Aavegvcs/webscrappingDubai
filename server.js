@@ -1085,9 +1085,9 @@ async function scrapeCars(
         // Weekly rental
         if (weeklyCheck) {
           const sinceDate = new Date(pickupDate);
-          const untilDate = new Date(dropOffDate);
-          const sinceDateTime = new Date(`${pickupDate}T${baseTime}`).getTime();
+          const untilDate = new Date(pickupDate);
           untilDate.setDate(sinceDate.getDate() + 7); // Add 7 days
+          const sinceDateTime = new Date(`${pickupDate}T${baseTime}`).getTime();
           const untilDateTime = new Date(
             `${untilDate.toISOString().split("T")[0]}T${baseTime}`
           ).getTime();
